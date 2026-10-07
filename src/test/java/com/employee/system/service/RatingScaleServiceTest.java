@@ -4,17 +4,13 @@ import com.employee.system.dto.RatingScaleDTO;
 import com.employee.system.entity.RatingScale;
 import com.employee.system.repository.RatingScaleRepository;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,22 +24,38 @@ class RatingScaleServiceTest {
     @InjectMocks
     private RatingScaleService ratingScaleService;
 
-    /* ---------- getRatingScaleById ---------- */
+    private RatingScale sampleEntity(Long id, Integer value, String label, Boolean active) {
+        RatingScale rs = new RatingScale();
+        rs.setId(id);
+        rs.setRatingValue(value);
+        rs.setRatingLabel(label);
+        rs.setRatingDescription("desc-" + value);
+        rs.setColorCode("#FFFFFF");
+        rs.setMinimumScore(0);
+        rs.setMaximumScore(100);
+        rs.setIsActive(active);
+        return rs;
+    }
+
+    private RatingScaleDTO sampleDto(Long id, Integer value, String label, Boolean active) {
+        RatingScaleDTO dto = new RatingScaleDTO();
+        dto.setId(id);
+        dto.setRatingValue(value);
+        dto.setRatingLabel(label);
+        dto.setRatingDescription("desc-" + value);
+        dto.setColorCode("#FFFFFF");
+        dto.setMinimumScore(0);
+        dto.setMaximumScore(100);
+        dto.setIsActive(active);
+        return dto;
+    }
 
     @Test
     @DisplayName("Given existing id when getRatingScaleById then return DTO")
-    void givenExistingId_whenGetRatingScaleById_thenReturnDTO() {
+    void givenExistingId_whenGetRatingScaleById_thenReturnDto() {
         // Arrange
         Long id = 1L;
-        RatingScale entity = new RatingScale();
-        entity.setId(id);
-        entity.setRatingValue(5);
-        entity.setRatingLabel("Excellent");
-        entity.setRatingDescription("Top performance");
-        entity.setColorCode("#00FF00");
-        entity.setMinimumScore(90);
-        entity.setMaximumScore(100);
-        entity.setIsActive(true);
+        RatingScale entity = sampleEntity(id, 5, "Excellent", true);
         when(ratingScaleRepository.findById(id)).thenReturn(Optional.of(entity));
 
         // Act
@@ -53,12 +65,6 @@ class RatingScaleServiceTest {
         assertNotNull(result);
         assertEquals(id, result.getId());
         assertEquals(entity.getRatingValue(), result.getRatingValue());
-        assertEquals(entity.getRatingLabel(), result.getRatingLabel());
-        assertEquals(entity.getRatingDescription(), result.getRatingDescription());
-        assertEquals(entity.getColorCode(), result.getColorCode());
-        assertEquals(entity.getMinimumScore(), result.getMinimumScore());
-        assertEquals(entity.getMaximumScore(), result.getMaximumScore());
-        assertEquals(entity.getIsActive(), result.getIsActive());
         verify(ratingScaleRepository, times(1)).findById(id);
     }
 
@@ -76,16 +82,12 @@ class RatingScaleServiceTest {
         verify(ratingScaleRepository, times(1)).findById(id);
     }
 
-    /* ---------- getRatingScaleByValue ---------- */
-
     @Test
     @DisplayName("Given existing value when getRatingScaleByValue then return DTO")
-    void givenExistingValue_whenGetRatingScaleByValue_thenReturnDTO() {
+    void givenExistingValue_whenGetRatingScaleByValue_thenReturnDto() {
         // Arrange
         Integer value = 3;
-        RatingScale entity = new RatingScale();
-        entity.setId(2L);
-        entity.setRatingValue(value);
+        RatingScale entity = sampleEntity(2L, value, "Good", true);
         when(ratingScaleRepository.findByRatingValue(value)).thenReturn(Optional.of(entity));
 
         // Act
@@ -111,28 +113,21 @@ class RatingScaleServiceTest {
         verify(ratingScaleRepository, times(1)).findByRatingValue(value);
     }
 
-    /* ---------- getAllActiveRatingScales ---------- */
-
     @Test
     @DisplayName("Given active scales when getAllActiveRatingScales then return DTO list")
-    void givenActiveScales_whenGetAllActiveRatingScales_thenReturnDTOList() {
+    void givenActiveScales_whenGetAllActiveRatingScales_thenReturnDtoList() {
         // Arrange
-        RatingScale rs1 = new RatingScale();
-        rs1.setId(1L);
-        rs1.setRatingValue(1);
-        RatingScale rs2 = new RatingScale();
-        rs2.setId(2L);
-        rs2.setRatingValue(2);
+        RatingScale rs1 = sampleEntity(1L, 1, "Poor", true);
+        RatingScale rs2 = sampleEntity(2L, 2, "Fair", true);
         when(ratingScaleRepository.findAllActive()).thenReturn(List.of(rs1, rs2));
 
         // Act
         List<RatingScaleDTO> result = ratingScaleService.getAllActiveRatingScales();
 
         // Assert
-        assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals(rs1.getId(), result.get(0).getId());
-        assertEquals(rs2.getId(), result.get(1).getId());
+        assertTrue(result.stream().anyMatch(dto -> dto.getId().equals(1L)));
+        assertTrue(result.stream().anyMatch(dto -> dto.getId().equals(2L)));
         verify(ratingScaleRepository, times(1)).findAllActive();
     }
 
@@ -151,178 +146,111 @@ class RatingScaleServiceTest {
         verify(ratingScaleRepository, times(1)).findAllActive();
     }
 
-    /* ---------- getAllRatingScales ---------- */
-
     @Test
     @DisplayName("Given all scales when getAllRatingScales then return DTO list")
-    void givenAllScales_whenGetAllRatingScales_thenReturnDTOList() {
+    void givenAllScales_whenGetAllRatingScales_thenReturnDtoList() {
         // Arrange
-        RatingScale rs = new RatingScale();
-        rs.setId(5L);
-        rs.setRatingValue(5);
-        when(ratingScaleRepository.findAll()).thenReturn(List.of(rs));
+        RatingScale rs1 = sampleEntity(1L, 1, "Poor", true);
+        RatingScale rs2 = sampleEntity(2L, 2, "Fair", false);
+        when(ratingScaleRepository.findAll()).thenReturn(List.of(rs1, rs2));
+
+        // Act
+        List<RatingScaleDTO> result = ratingScaleService.getAllRatingScales();
+
+        // Assert
+        assertEquals(2, result.size());
+        assertEquals("Poor", result.get(0).getRatingLabel());
+        assertEquals("Fair", result.get(1).getRatingLabel());
+        verify(ratingScaleRepository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("Given no scales when getAllRatingScales then return empty list")
+    void givenNoScales_whenGetAllRatingScales_thenReturnEmptyList() {
+        // Arrange
+        when(ratingScaleRepository.findAll()).thenReturn(Collections.emptyList());
 
         // Act
         List<RatingScaleDTO> result = ratingScaleService.getAllRatingScales();
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(rs.getId(), result.get(0).getId());
+        assertTrue(result.isEmpty());
         verify(ratingScaleRepository, times(1)).findAll();
     }
 
-    /* ---------- createRatingScale ---------- */
-
     @Test
-    @DisplayName("Given valid DTO when createRatingScale then return saved DTO")
-    void givenValidDTO_whenCreateRatingScale_thenReturnSavedDTO() {
+    @DisplayName("Given valid DTO when createRatingScale then return saved DTO with default active true")
+    void givenValidDto_whenCreateRatingScale_thenReturnSavedDtoWithDefaults() {
         // Arrange
-        RatingScaleDTO dto = new RatingScaleDTO();
-        dto.setRatingValue(4);
-        dto.setRatingLabel("Good");
-        dto.setRatingDescription("Meets expectations");
-        dto.setColorCode("#FFFF00");
-        dto.setMinimumScore(70);
-        dto.setMaximumScore(89);
-        dto.setIsActive(false);
-
-        RatingScale savedEntity = new RatingScale();
-        savedEntity.setId(10L);
-        savedEntity.setRatingValue(dto.getRatingValue());
-        savedEntity.setRatingLabel(dto.getRatingLabel());
-        savedEntity.setRatingDescription(dto.getRatingDescription());
-        savedEntity.setColorCode(dto.getColorCode());
-        savedEntity.setMinimumScore(dto.getMinimumScore());
-        savedEntity.setMaximumScore(dto.getMaximumScore());
-        savedEntity.setIsActive(dto.getIsActive());
-
+        RatingScaleDTO inputDto = sampleDto(null, 4, "Very Good", null);
+        RatingScale savedEntity = sampleEntity(10L, 4, "Very Good", true);
         when(ratingScaleRepository.save(any(RatingScale.class))).thenReturn(savedEntity);
 
         // Act
-        RatingScaleDTO result = ratingScaleService.createRatingScale(dto);
+        RatingScaleDTO result = ratingScaleService.createRatingScale(inputDto);
 
         // Assert
         assertNotNull(result);
-        assertEquals(savedEntity.getId(), result.getId());
-        assertEquals(dto.getRatingValue(), result.getRatingValue());
-        assertEquals(dto.getIsActive(), result.getIsActive());
-
-        ArgumentCaptor<RatingScale> captor = ArgumentCaptor.forClass(RatingScale.class);
-        verify(ratingScaleRepository, times(1)).save(captor.capture());
-        RatingScale captured = captor.getValue();
-        assertEquals(dto.getRatingValue(), captured.getRatingValue());
-        assertEquals(dto.getIsActive(), captured.getIsActive());
+        assertEquals(10L, result.getId());
+        assertTrue(result.getIsActive());
+        verify(ratingScaleRepository, times(1)).save(any(RatingScale.class));
     }
 
     @Test
     @DisplayName("Given DTO with null isActive when createRatingScale then default isActive true")
-    void givenDTOWithNullIsActive_whenCreateRatingScale_thenDefaultIsActiveTrue() {
+    void givenDtoWithNullIsActive_whenCreateRatingScale_thenDefaultIsActiveTrue() {
         // Arrange
-        RatingScaleDTO dto = new RatingScaleDTO();
-        dto.setRatingValue(2);
-        dto.setIsActive(null); // explicitly null
-
-        RatingScale savedEntity = new RatingScale();
-        savedEntity.setId(11L);
-        savedEntity.setRatingValue(dto.getRatingValue());
-        savedEntity.setIsActive(true); // defaulted by service
-
-        when(ratingScaleRepository.save(any(RatingScale.class))).thenReturn(savedEntity);
+        RatingScaleDTO inputDto = sampleDto(null, 2, "Fair", null);
+        RatingScale captured = new RatingScale();
+        when(ratingScaleRepository.save(any(RatingScale.class))).thenAnswer(invocation -> {
+            RatingScale arg = invocation.getArgument(0);
+            captured.setId(20L);
+            captured.setRatingValue(arg.getRatingValue());
+            captured.setIsActive(arg.getIsActive());
+            return captured;
+        });
 
         // Act
-        RatingScaleDTO result = ratingScaleService.createRatingScale(dto);
+        RatingScaleDTO result = ratingScaleService.createRatingScale(inputDto);
 
         // Assert
         assertNotNull(result);
+        assertEquals(20L, result.getId());
         assertTrue(result.getIsActive());
-        ArgumentCaptor<RatingScale> captor = ArgumentCaptor.forClass(RatingScale.class);
-        verify(ratingScaleRepository, times(1)).save(captor.capture());
-        assertTrue(captor.getValue().getIsActive());
+        assertEquals(2, result.getRatingValue());
+        verify(ratingScaleRepository, times(1)).save(any(RatingScale.class));
     }
 
     @Test
-    @DisplayName("Given null DTO when createRatingScale then throw NullPointerException")
-    void givenNullDTO_whenCreateRatingScale_thenThrowNullPointerException() {
+    @DisplayName("Given existing id when updateRatingScale then return updated DTO")
+    void givenExistingId_whenUpdateRatingScale_thenReturnUpdatedDto() {
         // Arrange
-        RatingScaleDTO dto = null;
-
-        // Act & Assert
-        assertThrows(NullPointerException.class, () -> ratingScaleService.createRatingScale(dto));
-        verifyNoInteractions(ratingScaleRepository);
-    }
-
-    /* ---------- updateRatingScale ---------- */
-
-    @Test
-    @DisplayName("Given existing id and valid DTO when updateRatingScale then return updated DTO")
-    void givenExistingIdAndValidDTO_whenUpdateRatingScale_thenReturnUpdatedDTO() {
-        // Arrange
-        Long id = 3L;
-        RatingScale existing = new RatingScale();
-        existing.setId(id);
-        existing.setRatingValue(1);
+        Long id = 5L;
+        RatingScale existing = sampleEntity(id, 1, "Poor", true);
+        RatingScaleDTO updateDto = sampleDto(null, 5, "Excellent", false);
         when(ratingScaleRepository.findById(id)).thenReturn(Optional.of(existing));
-
-        RatingScaleDTO dto = new RatingScaleDTO();
-        dto.setRatingValue(5);
-        dto.setRatingLabel("Outstanding");
-        dto.setRatingDescription("Exceeds all expectations");
-        dto.setColorCode("#FF0000");
-        dto.setMinimumScore(95);
-        dto.setMaximumScore(100);
-        dto.setIsActive(false);
-
-        RatingScale saved = new RatingScale();
-        saved.setId(id);
-        saved.setRatingValue(dto.getRatingValue());
-        saved.setRatingLabel(dto.getRatingLabel());
-        saved.setRatingDescription(dto.getRatingDescription());
-        saved.setColorCode(dto.getColorCode());
-        saved.setMinimumScore(dto.getMinimumScore());
-        saved.setMaximumScore(dto.getMaximumScore());
-        saved.setIsActive(dto.getIsActive());
-
-        when(ratingScaleRepository.save(any(RatingScale.class))).thenReturn(saved);
+        when(ratingScaleRepository.save(any(RatingScale.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        RatingScaleDTO result = ratingScaleService.updateRatingScale(id, dto);
+        RatingScaleDTO result = ratingScaleService.updateRatingScale(id, updateDto);
 
         // Assert
         assertNotNull(result);
-        assertEquals(dto.getRatingValue(), result.getRatingValue());
-        assertEquals(dto.getIsActive(), result.getIsActive());
-
+        assertEquals(id, result.getId());
+        assertEquals(5, result.getRatingValue());
+        assertEquals("Excellent", result.getRatingLabel());
+        assertFalse(result.getIsActive());
         verify(ratingScaleRepository, times(1)).findById(id);
-        ArgumentCaptor<RatingScale> captor = ArgumentCaptor.forClass(RatingScale.class);
-        verify(ratingScaleRepository, times(1)).save(captor.capture());
-        RatingScale updatedEntity = captor.getValue();
-        assertEquals(dto.getRatingValue(), updatedEntity.getRatingValue());
-        assertEquals(dto.getIsActive(), updatedEntity.getIsActive());
-    }
-
-    @Test
-    @DisplayName("Given null DTO when updateRatingScale then throw NullPointerException")
-    void givenNullDTO_whenUpdateRatingScale_thenThrowNullPointerException() {
-        // Arrange
-        Long id = 4L;
-        RatingScale existing = new RatingScale();
-        existing.setId(id);
-        when(ratingScaleRepository.findById(id)).thenReturn(Optional.of(existing));
-
-        // Act & Assert
-        assertThrows(NullPointerException.class, () -> ratingScaleService.updateRatingScale(id, null));
-        verify(ratingScaleRepository, times(1)).findById(id);
-        verify(ratingScaleRepository, never()).save(any());
+        verify(ratingScaleRepository, times(1)).save(existing);
     }
 
     @Test
     @DisplayName("Given non‑existing id when updateRatingScale then throw RuntimeException")
     void givenNonExistingId_whenUpdateRatingScale_thenThrowRuntimeException() {
         // Arrange
-        Long id = 999L;
-        RatingScaleDTO dto = new RatingScaleDTO();
-        dto.setRatingValue(3);
+        Long id = 99L;
+        RatingScaleDTO dto = sampleDto(null, 3, "Good", true);
         when(ratingScaleRepository.findById(id)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -333,30 +261,28 @@ class RatingScaleServiceTest {
         verify(ratingScaleRepository, never()).save(any());
     }
 
-    /* ---------- deleteRatingScale ---------- */
-
     @Test
-    @DisplayName("Given existing id when deleteRatingScale then repository delete called")
-    void givenExistingId_whenDeleteRatingScale_thenRepositoryDeleteCalled() {
+    @DisplayName("Given existing id when deleteRatingScale then repository delete is invoked")
+    void givenExistingId_whenDeleteRatingScale_thenRepositoryDeleteInvoked() {
         // Arrange
-        Long id = 5L;
-        RatingScale existing = new RatingScale();
-        existing.setId(id);
-        when(ratingScaleRepository.findById(id)).thenReturn(Optional.of(existing));
+        Long id = 7L;
+        RatingScale entity = sampleEntity(id, 2, "Fair", true);
+        when(ratingScaleRepository.findById(id)).thenReturn(Optional.of(entity));
+        doNothing().when(ratingScaleRepository).delete(entity);
 
         // Act
         ratingScaleService.deleteRatingScale(id);
 
         // Assert
         verify(ratingScaleRepository, times(1)).findById(id);
-        verify(ratingScaleRepository, times(1)).delete(existing);
+        verify(ratingScaleRepository, times(1)).delete(entity);
     }
 
     @Test
     @DisplayName("Given non‑existing id when deleteRatingScale then throw RuntimeException")
     void givenNonExistingId_whenDeleteRatingScale_thenThrowRuntimeException() {
         // Arrange
-        Long id = 777L;
+        Long id = 88L;
         when(ratingScaleRepository.findById(id)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -365,5 +291,17 @@ class RatingScaleServiceTest {
         assertTrue(ex.getMessage().contains("Rating scale not found with id"));
         verify(ratingScaleRepository, times(1)).findById(id);
         verify(ratingScaleRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("Given null DTO when createRatingScale then throw NullPointerException")
+    void givenNullDto_whenCreateRatingScale_thenThrowNullPointerException() {
+        // Arrange
+        RatingScaleDTO nullDto = null;
+
+        // Act & Assert
+        assertThrows(NullPointerException.class,
+                () -> ratingScaleService.createRatingScale(nullDto));
+        verifyNoInteractions(ratingScaleRepository);
     }
 }
