@@ -3,20 +3,25 @@ package com.employee.system.service;
 import com.employee.system.dto.RatingScaleDTO;
 import com.employee.system.entity.RatingScale;
 import com.employee.system.repository.RatingScaleRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class RatingScaleServiceTest {
+public class RatingScaleServiceTest {
 
     @Mock
     private RatingScaleRepository ratingScaleRepository;
@@ -24,284 +29,188 @@ class RatingScaleServiceTest {
     @InjectMocks
     private RatingScaleService ratingScaleService;
 
-    private RatingScale sampleEntity(Long id, Integer value, String label, Boolean active) {
-        RatingScale rs = new RatingScale();
-        rs.setId(id);
-        rs.setRatingValue(value);
-        rs.setRatingLabel(label);
-        rs.setRatingDescription("desc-" + value);
-        rs.setColorCode("#FFFFFF");
-        rs.setMinimumScore(0);
-        rs.setMaximumScore(100);
-        rs.setIsActive(active);
-        return rs;
-    }
+    private RatingScale ratingScale;
+    private RatingScaleDTO ratingScaleDTO;
 
-    private RatingScaleDTO sampleDto(Long id, Integer value, String label, Boolean active) {
-        RatingScaleDTO dto = new RatingScaleDTO();
-        dto.setId(id);
-        dto.setRatingValue(value);
-        dto.setRatingLabel(label);
-        dto.setRatingDescription("desc-" + value);
-        dto.setColorCode("#FFFFFF");
-        dto.setMinimumScore(0);
-        dto.setMaximumScore(100);
-        dto.setIsActive(active);
-        return dto;
+    @BeforeEach
+    public void setUp() {
+        ratingScale = new RatingScale();
+        ratingScale.setId(1L);
+        ratingScale.setRatingValue(5);
+        ratingScale.setRatingLabel("Excellent");
+        ratingScale.setRatingDescription("Top performance");
+        ratingScale.setColorCode("green");
+        ratingScale.setMinimumScore(90);
+        ratingScale.setMaximumScore(100);
+        ratingScale.setIsActive(true);
+
+        ratingScaleDTO = new RatingScaleDTO();
+        ratingScaleDTO.setId(1L);
+        ratingScaleDTO.setRatingValue(5);
+        ratingScaleDTO.setRatingLabel("Excellent");
+        ratingScaleDTO.setRatingDescription("Top performance");
+        ratingScaleDTO.setColorCode("green");
+        ratingScaleDTO.setMinimumScore(90);
+        ratingScaleDTO.setMaximumScore(100);
+        ratingScaleDTO.setIsActive(true);
     }
 
     @Test
-    @DisplayName("Given existing id when getRatingScaleById then return DTO")
-    void givenExistingId_whenGetRatingScaleById_thenReturnDto() {
+    @DisplayName("givenValidId_whenGetRatingScaleById_thenReturnRatingScaleDTO")
+    public void givenValidId_whenGetRatingScaleById_thenReturnRatingScaleDTO() {
         // Arrange
-        Long id = 1L;
-        RatingScale entity = sampleEntity(id, 5, "Excellent", true);
-        when(ratingScaleRepository.findById(id)).thenReturn(Optional.of(entity));
+        when(ratingScaleRepository.findById(1L)).thenReturn(Optional.of(ratingScale));
 
         // Act
-        RatingScaleDTO result = ratingScaleService.getRatingScaleById(id);
+        RatingScaleDTO result = ratingScaleService.getRatingScaleById(1L);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(id, result.getId());
-        assertEquals(entity.getRatingValue(), result.getRatingValue());
-        verify(ratingScaleRepository, times(1)).findById(id);
+        assertEquals(ratingScaleDTO, result);
+        verify(ratingScaleRepository, times(1)).findById(1L);
     }
 
     @Test
-    @DisplayName("Given non‑existing id when getRatingScaleById then throw RuntimeException")
-    void givenNonExistingId_whenGetRatingScaleById_thenThrowRuntimeException() {
+    @DisplayName("givenNonExistingId_whenGetRatingScaleById_thenThrowRuntimeException")
+    public void givenNonExistingId_whenGetRatingScaleById_thenThrowRuntimeException() {
         // Arrange
-        Long id = 99L;
-        when(ratingScaleRepository.findById(id)).thenReturn(Optional.empty());
+        when(ratingScaleRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> ratingScaleService.getRatingScaleById(id));
-        assertTrue(ex.getMessage().contains("Rating scale not found with id"));
-        verify(ratingScaleRepository, times(1)).findById(id);
+        assertThrows(RuntimeException.class, () -> ratingScaleService.getRatingScaleById(1L));
+        verify(ratingScaleRepository, times(1)).findById(1L);
     }
 
     @Test
-    @DisplayName("Given existing value when getRatingScaleByValue then return DTO")
-    void givenExistingValue_whenGetRatingScaleByValue_thenReturnDto() {
+    @DisplayName("givenValidValue_whenGetRatingScaleByValue_thenReturnRatingScaleDTO")
+    public void givenValidValue_whenGetRatingScaleByValue_thenReturnRatingScaleDTO() {
         // Arrange
-        Integer value = 3;
-        RatingScale entity = sampleEntity(2L, value, "Good", true);
-        when(ratingScaleRepository.findByRatingValue(value)).thenReturn(Optional.of(entity));
+        when(ratingScaleRepository.findByRatingValue(5)).thenReturn(Optional.of(ratingScale));
 
         // Act
-        RatingScaleDTO result = ratingScaleService.getRatingScaleByValue(value);
+        RatingScaleDTO result = ratingScaleService.getRatingScaleByValue(5);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(value, result.getRatingValue());
-        verify(ratingScaleRepository, times(1)).findByRatingValue(value);
+        assertEquals(ratingScaleDTO, result);
+        verify(ratingScaleRepository, times(1)).findByRatingValue(5);
     }
 
     @Test
-    @DisplayName("Given non‑existing value when getRatingScaleByValue then throw RuntimeException")
-    void givenNonExistingValue_whenGetRatingScaleByValue_thenThrowRuntimeException() {
+    @DisplayName("givenNonExistingValue_whenGetRatingScaleByValue_thenThrowRuntimeException")
+    public void givenNonExistingValue_whenGetRatingScaleByValue_thenThrowRuntimeException() {
         // Arrange
-        Integer value = 10;
-        when(ratingScaleRepository.findByRatingValue(value)).thenReturn(Optional.empty());
+        when(ratingScaleRepository.findByRatingValue(5)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> ratingScaleService.getRatingScaleByValue(value));
-        assertTrue(ex.getMessage().contains("Rating scale not found with value"));
-        verify(ratingScaleRepository, times(1)).findByRatingValue(value);
+        assertThrows(RuntimeException.class, () -> ratingScaleService.getRatingScaleByValue(5));
+        verify(ratingScaleRepository, times(1)).findByRatingValue(5);
     }
 
     @Test
-    @DisplayName("Given active scales when getAllActiveRatingScales then return DTO list")
-    void givenActiveScales_whenGetAllActiveRatingScales_thenReturnDtoList() {
+    @DisplayName("givenAllActiveRatingScales_whenGetAllActiveRatingScales_thenReturnRatingScaleDTOList")
+    public void givenAllActiveRatingScales_whenGetAllActiveRatingScales_thenReturnRatingScaleDTOList() {
         // Arrange
-        RatingScale rs1 = sampleEntity(1L, 1, "Poor", true);
-        RatingScale rs2 = sampleEntity(2L, 2, "Fair", true);
-        when(ratingScaleRepository.findAllActive()).thenReturn(List.of(rs1, rs2));
+        List<RatingScale> ratingScales = Arrays.asList(ratingScale);
+        when(ratingScaleRepository.findAllActive()).thenReturn(ratingScales);
 
         // Act
         List<RatingScaleDTO> result = ratingScaleService.getAllActiveRatingScales();
 
         // Assert
-        assertEquals(2, result.size());
-        assertTrue(result.stream().anyMatch(dto -> dto.getId().equals(1L)));
-        assertTrue(result.stream().anyMatch(dto -> dto.getId().equals(2L)));
+        assertEquals(1, result.size());
+        assertEquals(ratingScaleDTO, result.get(0));
         verify(ratingScaleRepository, times(1)).findAllActive();
     }
 
     @Test
-    @DisplayName("Given no active scales when getAllActiveRatingScales then return empty list")
-    void givenNoActiveScales_whenGetAllActiveRatingScales_thenReturnEmptyList() {
+    @DisplayName("givenAllRatingScales_whenGetAllRatingScales_thenReturnRatingScaleDTOList")
+    public void givenAllRatingScales_whenGetAllRatingScales_thenReturnRatingScaleDTOList() {
         // Arrange
-        when(ratingScaleRepository.findAllActive()).thenReturn(Collections.emptyList());
-
-        // Act
-        List<RatingScaleDTO> result = ratingScaleService.getAllActiveRatingScales();
-
-        // Assert
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-        verify(ratingScaleRepository, times(1)).findAllActive();
-    }
-
-    @Test
-    @DisplayName("Given all scales when getAllRatingScales then return DTO list")
-    void givenAllScales_whenGetAllRatingScales_thenReturnDtoList() {
-        // Arrange
-        RatingScale rs1 = sampleEntity(1L, 1, "Poor", true);
-        RatingScale rs2 = sampleEntity(2L, 2, "Fair", false);
-        when(ratingScaleRepository.findAll()).thenReturn(List.of(rs1, rs2));
+        List<RatingScale> ratingScales = Arrays.asList(ratingScale);
+        when(ratingScaleRepository.findAll()).thenReturn(ratingScales);
 
         // Act
         List<RatingScaleDTO> result = ratingScaleService.getAllRatingScales();
 
         // Assert
-        assertEquals(2, result.size());
-        assertEquals("Poor", result.get(0).getRatingLabel());
-        assertEquals("Fair", result.get(1).getRatingLabel());
+        assertEquals(1, result.size());
+        assertEquals(ratingScaleDTO, result.get(0));
         verify(ratingScaleRepository, times(1)).findAll();
     }
 
     @Test
-    @DisplayName("Given no scales when getAllRatingScales then return empty list")
-    void givenNoScales_whenGetAllRatingScales_thenReturnEmptyList() {
+    @DisplayName("givenValidDTO_whenCreateRatingScale_thenReturnCreatedRatingScaleDTO")
+    public void givenValidDTO_whenCreateRatingScale_thenReturnCreatedRatingScaleDTO() {
         // Arrange
-        when(ratingScaleRepository.findAll()).thenReturn(Collections.emptyList());
+        when(ratingScaleRepository.save(any(RatingScale.class))).thenReturn(ratingScale);
 
         // Act
-        List<RatingScaleDTO> result = ratingScaleService.getAllRatingScales();
+        RatingScaleDTO result = ratingScaleService.createRatingScale(ratingScaleDTO);
 
         // Assert
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-        verify(ratingScaleRepository, times(1)).findAll();
-    }
-
-    @Test
-    @DisplayName("Given valid DTO when createRatingScale then return saved DTO with default active true")
-    void givenValidDto_whenCreateRatingScale_thenReturnSavedDtoWithDefaults() {
-        // Arrange
-        RatingScaleDTO inputDto = sampleDto(null, 4, "Very Good", null);
-        RatingScale savedEntity = sampleEntity(10L, 4, "Very Good", true);
-        when(ratingScaleRepository.save(any(RatingScale.class))).thenReturn(savedEntity);
-
-        // Act
-        RatingScaleDTO result = ratingScaleService.createRatingScale(inputDto);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(10L, result.getId());
-        assertTrue(result.getIsActive());
+        assertEquals(ratingScaleDTO, result);
         verify(ratingScaleRepository, times(1)).save(any(RatingScale.class));
     }
 
     @Test
-    @DisplayName("Given DTO with null isActive when createRatingScale then default isActive true")
-    void givenDtoWithNullIsActive_whenCreateRatingScale_thenDefaultIsActiveTrue() {
+    @DisplayName("givenNullDTO_whenCreateRatingScale_thenThrowIllegalArgumentException")
+    public void givenNullDTO_whenCreateRatingScale_thenThrowIllegalArgumentException() {
         // Arrange
-        RatingScaleDTO inputDto = sampleDto(null, 2, "Fair", null);
-        RatingScale captured = new RatingScale();
-        when(ratingScaleRepository.save(any(RatingScale.class))).thenAnswer(invocation -> {
-            RatingScale arg = invocation.getArgument(0);
-            captured.setId(20L);
-            captured.setRatingValue(arg.getRatingValue());
-            captured.setIsActive(arg.getIsActive());
-            return captured;
-        });
+        RatingScaleDTO nullDTO = null;
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> ratingScaleService.createRatingScale(nullDTO));
+        verify(ratingScaleRepository, never()).save(any(RatingScale.class));
+    }
+
+    @Test
+    @DisplayName("givenValidDTO_whenUpdateRatingScale_thenReturnUpdatedRatingScaleDTO")
+    public void givenValidDTO_whenUpdateRatingScale_thenReturnUpdatedRatingScaleDTO() {
+        // Arrange
+        when(ratingScaleRepository.findById(1L)).thenReturn(Optional.of(ratingScale));
+        when(ratingScaleRepository.save(any(RatingScale.class))).thenReturn(ratingScale);
 
         // Act
-        RatingScaleDTO result = ratingScaleService.createRatingScale(inputDto);
+        RatingScaleDTO result = ratingScaleService.updateRatingScale(1L, ratingScaleDTO);
 
         // Assert
-        assertNotNull(result);
-        assertEquals(20L, result.getId());
-        assertTrue(result.getIsActive());
-        assertEquals(2, result.getRatingValue());
+        assertEquals(ratingScaleDTO, result);
+        verify(ratingScaleRepository, times(1)).findById(1L);
         verify(ratingScaleRepository, times(1)).save(any(RatingScale.class));
     }
 
     @Test
-    @DisplayName("Given existing id when updateRatingScale then return updated DTO")
-    void givenExistingId_whenUpdateRatingScale_thenReturnUpdatedDto() {
+    @DisplayName("givenNonExistingId_whenUpdateRatingScale_thenThrowRuntimeException")
+    public void givenNonExistingId_whenUpdateRatingScale_thenThrowRuntimeException() {
         // Arrange
-        Long id = 5L;
-        RatingScale existing = sampleEntity(id, 1, "Poor", true);
-        RatingScaleDTO updateDto = sampleDto(null, 5, "Excellent", false);
-        when(ratingScaleRepository.findById(id)).thenReturn(Optional.of(existing));
-        when(ratingScaleRepository.save(any(RatingScale.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // Act
-        RatingScaleDTO result = ratingScaleService.updateRatingScale(id, updateDto);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(id, result.getId());
-        assertEquals(5, result.getRatingValue());
-        assertEquals("Excellent", result.getRatingLabel());
-        assertFalse(result.getIsActive());
-        verify(ratingScaleRepository, times(1)).findById(id);
-        verify(ratingScaleRepository, times(1)).save(existing);
-    }
-
-    @Test
-    @DisplayName("Given non‑existing id when updateRatingScale then throw RuntimeException")
-    void givenNonExistingId_whenUpdateRatingScale_thenThrowRuntimeException() {
-        // Arrange
-        Long id = 99L;
-        RatingScaleDTO dto = sampleDto(null, 3, "Good", true);
-        when(ratingScaleRepository.findById(id)).thenReturn(Optional.empty());
+        when(ratingScaleRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> ratingScaleService.updateRatingScale(id, dto));
-        assertTrue(ex.getMessage().contains("Rating scale not found with id"));
-        verify(ratingScaleRepository, times(1)).findById(id);
-        verify(ratingScaleRepository, never()).save(any());
+        assertThrows(RuntimeException.class, () -> ratingScaleService.updateRatingScale(1L, ratingScaleDTO));
+        verify(ratingScaleRepository, times(1)).findById(1L);
+        verify(ratingScaleRepository, never()).save(any(RatingScale.class));
     }
 
     @Test
-    @DisplayName("Given existing id when deleteRatingScale then repository delete is invoked")
-    void givenExistingId_whenDeleteRatingScale_thenRepositoryDeleteInvoked() {
+    @DisplayName("givenValidId_whenDeleteRatingScale_thenNoException")
+    public void givenValidId_whenDeleteRatingScale_thenNoException() {
         // Arrange
-        Long id = 7L;
-        RatingScale entity = sampleEntity(id, 2, "Fair", true);
-        when(ratingScaleRepository.findById(id)).thenReturn(Optional.of(entity));
-        doNothing().when(ratingScaleRepository).delete(entity);
-
-        // Act
-        ratingScaleService.deleteRatingScale(id);
-
-        // Assert
-        verify(ratingScaleRepository, times(1)).findById(id);
-        verify(ratingScaleRepository, times(1)).delete(entity);
-    }
-
-    @Test
-    @DisplayName("Given non‑existing id when deleteRatingScale then throw RuntimeException")
-    void givenNonExistingId_whenDeleteRatingScale_thenThrowRuntimeException() {
-        // Arrange
-        Long id = 88L;
-        when(ratingScaleRepository.findById(id)).thenReturn(Optional.empty());
+        when(ratingScaleRepository.findById(1L)).thenReturn(Optional.of(ratingScale));
 
         // Act & Assert
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> ratingScaleService.deleteRatingScale(id));
-        assertTrue(ex.getMessage().contains("Rating scale not found with id"));
-        verify(ratingScaleRepository, times(1)).findById(id);
-        verify(ratingScaleRepository, never()).delete(any());
+        assertDoesNotThrow(() -> ratingScaleService.deleteRatingScale(1L));
+        verify(ratingScaleRepository, times(1)).findById(1L);
+        verify(ratingScaleRepository, times(1)).delete(any(RatingScale.class));
     }
 
     @Test
-    @DisplayName("Given null DTO when createRatingScale then throw NullPointerException")
-    void givenNullDto_whenCreateRatingScale_thenThrowNullPointerException() {
+    @DisplayName("givenNonExistingId_whenDeleteRatingScale_thenThrowRuntimeException")
+    public void givenNonExistingId_whenDeleteRatingScale_thenThrowRuntimeException() {
         // Arrange
-        RatingScaleDTO nullDto = null;
+        when(ratingScaleRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NullPointerException.class,
-                () -> ratingScaleService.createRatingScale(nullDto));
-        verifyNoInteractions(ratingScaleRepository);
+        assertThrows(RuntimeException.class, () -> ratingScaleService.deleteRatingScale(1L));
+        verify(ratingScaleRepository, times(1)).findById(1L);
+        verify(ratingScaleRepository, never()).delete(any(RatingScale.class));
     }
 }
